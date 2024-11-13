@@ -1,0 +1,71 @@
+//5.PC-Mthread
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#define BUFFER_SIZE 5
+int buffer[BUFFER_SIZE]; // Shared buffer
+int count = 0;           // Number of items in the buffer
+pthread_mutex_t mutex;     // Mutex to protect buffer access
+pthread_cond_t cond_full;  // Condition variable to signal if buffer is full
+pthread_cond_t cond_empty; // Condition variable to signal if buffer is empty
+void *producer(void *arg)
+{
+    int item;
+    for (int i = 0; i < 10; i++)
+    {
+        item = rand() % 100; // Produce a random item
+        pthread_mutex_lock(&mutex); // Enter critical section
+        while (count == BUFFER_SIZE)
+        { // If buffer is full, wait
+            pthread_cond_wait(&cond_empty, &mutex);
+        }
+        // Add the item to the buffer
+        buffer[count] = item;
+        printf("Producer produced item %d\n", item);
+        count++;
+        pthread_cond_signal(&cond_full); // Signal consumer that the buffer is not empty
+        pthread_mutex_unlock(&mutex);    // Exit critical section
+      //  sleep(1); // Simulate time to produce
+    }
+    return NULL;
+ }
+ void *consumer(void *arg)
+ {
+    int item;
+    for (int i = 0; i < 10; i++)
+    {
+        pthread_mutex_lock(&mutex); // Enter critical section
+        while (count == 0)
+        { // If buffer is empty, wait
+            pthread_cond_wait(&cond_full, &mutex);
+        }
+        // Remove the item from the buffer
+        count--;
+        item = buffer[count];
+        printf("Consumer consumed item %d\n", item);
+        pthread_cond_signal(&cond_empty); // Signal producer that the buffer is not full
+        pthread_mutex_unlock(&mutex);     // Exit critical section
+      //  sleep(1); // Simulate time to consume
+
+    }
+    return NULL;
+}
+int main()
+{
+    pthread_t prod, cons;
+     // Initialize mutex and condition variables
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&cond_full, NULL);
+    pthread_cond_init(&cond_empty, NULL);
+     // Create producer and consumer threads
+    pthread_create(&prod, NULL, producer, NULL);
+    pthread_create(&cons, NULL, consumer, NULL);
+//     // Wait for the threads to finish
+    pthread_join(prod, NULL);
+    pthread_join(cons, NULL);
+//     // Clean up
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond_full);
+    pthread_cond_destroy(&cond_empty);
+    return 0;
+}
