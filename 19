@@ -1,0 +1,56 @@
+//19.sstf-DSchedulinhg
+//sstf
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdbool.h>
+
+int find_nearest(int requests[], bool served[], int n, int head)
+{
+    int min_distance = 1e9, nearest = -1;
+    for (int i = 0; i < n; i++)
+    {
+        if (!served[i])
+        {
+            int distance = abs(head - requests[i]);
+            if (distance < min_distance)
+            {
+                min_distance = distance;
+                nearest = i;
+            }
+        }
+    }
+    return nearest;
+}
+
+void sstf(int requests[], int n, int head)
+{
+    bool served[n];
+    int seek_time = 0;
+    for (int i = 0; i < n; i++)
+        served[i] = false;
+
+    printf("SSTF Disk Scheduling:\n");
+    printf("Request Order | Head Position | Seek Distance\n");
+
+    for (int i = 0; i < n; i++)
+    {
+        int nearest = find_nearest(requests, served, n, head);
+        served[nearest] = true;
+        int distance = abs(head - requests[nearest]);
+        seek_time += distance;
+        printf("%12d | %13d | %13d\n", requests[nearest], head, distance);
+        head = requests[nearest];
+    }
+
+    printf("\nTotal Seek Time: %d cylinders\n", seek_time);
+    printf("Average Seek Time: %.2f cylinders\n\n", (float)seek_time / n);
+}
+
+int main()
+{
+    int requests[] = {82, 170, 43, 140, 24, 16, 190};
+    int head = 50;
+    int n = sizeof(requests) / sizeof(requests[0]);
+    sstf(requests, n, head);
+    return 0;
+}
