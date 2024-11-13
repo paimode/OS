@@ -1,0 +1,76 @@
+//4.RW-Mthread
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+pthread_mutex_t mutex; // Mutex for mutual exclusion
+pthread_mutex_t wri;   // change it to writer // Condition variable for signaling
+int rc = 0;            // Reader count
+int x = 0;             // Shared data
+void *reader(void *arg)
+{
+    int id = *((int *)arg);
+    // Lock the mutex before checking and modifying the reader count
+    pthread_mutex_lock(&mutex);
+    rc++;
+    if (rc == 1)
+    {
+        // If this is the first reader, it will block writers
+        pthread_mutex_lock(&wri);
+    }
+    pthread_mutex_unlock(&mutex); // Unlock after modifying the reader count
+    // Reading section
+    printf("Reader %d is reading \n", id);
+    // Lock the mutex to modify the reader count after reading
+    pthread_mutex_lock(&mutex);
+    rc--;
+    if (rc == 0)
+    {
+        // If this is the last reader, it will signal waiting writers
+        pthread_mutex_unlock(&wri);
+    }
+    pthread_mutex_unlock(&mutex); // Unlock after modifying the reader count
+    return NULL; // Return from the reader thread
+}
+void *writer(void *arg)
+{
+    // Lock the mutex to gain exclusive access to the shared resource
+    pthread_mutex_lock(&mutex);
+    // Writing section
+    x++;
+    printf("The data written: %d \n", x);
+    pthread_mutex_unlock(&mutex); // Unlock after writing
+    return NULL; // Return from the writer thread
+}
+int main()
+{
+    pthread_mutex_init(&mutex, NULL); // Initialize the mutex
+    pthread_mutex_init(&wri, NULL);   // Initialize the condition variable
+    int r_id[10], w_id[2];
+    pthread_t reader_t[10], writer_t[2];
+    // Create reader threads
+    for (int i = 0; i < 10; i++)
+    {
+        r_id[i] = i;
+        pthread_create(&reader_t[i], NULL, reader, &r_id[i]);
+    }
+    // Create writer threads
+    for (int i = 0; i < 2; i++)
+    {
+        w_id[i] = i;
+        pthread_create(&writer_t[i], NULL, writer, &w_id[i]);
+    }
+    // Wait for all reader threads to finish
+    for (int i = 0; i < 10; i++)
+    {
+        pthread_join(reader_t[i], NULL);
+    }
+    // Wait for all writer threads to finish
+    for (int i = 0; i < 2; i++)
+    {
+        pthread_join(writer_t[i], NULL);
+    }
+    // Clean up
+    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&wri);
+    return 0;
+}
