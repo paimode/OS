@@ -1,0 +1,79 @@
+//22.zombie/orphan/sumoddeven
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+void zombie_process_demo() {
+    pid_t pid = fork();
+
+    if (pid > 0) {
+        // Parent process
+        printf("Parent process (PID: %d) created a zombie child (PID: %d)\n", getpid(), pid);
+        sleep(10); // Wait for a while to make the child a zombie
+        printf("Zombie child process created\n");
+    } else if (pid == 0) {
+        // Child process
+        printf("Child process (PID: %d) exiting\n", getpid());
+        exit(0); // Child exits, becomes zombie
+    }
+}
+
+void orphan_process_demo() {
+    pid_t pid = fork();
+
+    if (pid > 0) {
+        // Parent process
+        printf("Parent process (PID: %d) created a child (PID: %d) that will become orphan\n", getpid(), pid);
+        sleep(2); // Give time for the child to start running
+        printf("Parent process (PID: %d) exiting\n", getpid());
+    } else if (pid == 0) {
+        // Child process
+        sleep(5); // Delay to ensure parent exits before the child
+        printf("Orphan child process (PID: %d) now adopted by init process\n", getpid());
+    }
+}
+
+void sum_even_odd_numbers(int arr[], int size) {
+    pid_t pid = fork();
+
+    if (pid > 0) {
+        // Parent process: Sum of even numbers
+        int even_sum = 0;
+        for (int i = 0; i < size; i++) {
+            if (arr[i] % 2 == 0) {
+                even_sum += arr[i];
+            }
+        }
+        wait(NULL); // Wait for the child to finish
+        printf("Parent process (PID: %d): Sum of even numbers = %d\n", getpid(), even_sum);
+    } else if (pid == 0) {
+        // Child process: Sum of odd numbers
+        int odd_sum = 0;
+        for (int i = 0; i < size; i++) {
+            if (arr[i] % 2 != 0) {
+                odd_sum += arr[i];
+            }
+        }
+        printf("Child process (PID: %d): Sum of odd numbers = %d\n", getpid(), odd_sum);
+        exit(0); // Child exits
+    }
+}
+
+int main() {
+    int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // Example array
+    int size = sizeof(arr) / sizeof(arr[0]);
+
+    printf("Demonstrating Zombie Process:\n");
+    zombie_process_demo();
+    sleep(10); // Wait to observe the zombie process in `ps` command
+
+    printf("\nDemonstrating Orphan Process:\n");
+    orphan_process_demo();
+    sleep(10); // Wait to observe the orphan process in `ps` command
+
+    printf("\nCalculating Sum of Even and Odd Numbers:\n");
+    sum_even_odd_numbers(arr, size);
+
+    return 0;
+}
