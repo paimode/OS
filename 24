@@ -1,0 +1,45 @@
+//24.Write a program to read and copy the contents of file character by character, line by line.
+import java.io.*;
+
+public class FileCopyExample {
+    public static void main(String[] args) {
+        String sourceFile = "source.txt";
+        String charDestinationFile = "charDestination.txt";
+        String lineDestinationFile = "lineDestination.txt";
+        
+        // Copy file character by character
+        copyCharacterByCharacter(sourceFile, charDestinationFile);
+
+        // Copy file line by line
+        copyLineByLine(sourceFile, lineDestinationFile);
+    }
+
+    public static void copyCharacterByCharacter(String source, String destination) {
+        try (FileReader fr = new FileReader(source);
+             FileWriter fw = new FileWriter(destination)) {
+             
+            int ch;
+            while ((ch = fr.read()) != -1) {
+                fw.write(ch);
+            }
+            System.out.println("File copied character by character to " + destination);
+        } catch (IOException e) {
+            System.out.println("An error occurred during character-by-character copy: " + e.getMessage());
+        }
+    }
+
+    public static void copyLineByLine(String source, String destination) {
+        try (BufferedReader br = new BufferedReader(new FileReader(source));
+             BufferedWriter bw = new BufferedWriter(new FileWriter(destination))) {
+             
+            String line;
+            while ((line = br.readLine()) != null) {
+                bw.write(line);
+                bw.newLine();  // Add newline to maintain original line structure
+            }
+            System.out.println("File copied line by line to " + destination);
+        } catch (IOException e) {
+            System.out.println("An error occurred during line-by-line copy: " + e.getMessage());
+        }
+    }
+}
