@@ -1,0 +1,134 @@
+//3.M-thread
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#define SIZE 3
+int matrix1[SIZE][SIZE], matrix2[SIZE][SIZE], result[SIZE][SIZE];
+
+void *add_matrices(void *arg);
+void *subtract_matrices(void *arg);
+void *multiply_matrices(void *arg);
+void initialize_matrices();
+void display_matrix(int matrix[SIZE][SIZE]);
+
+void initialize_matrices() {
+    printf("Initializing matrices...\n");
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            matrix1[i][j] = rand() % 10;
+            matrix2[i][j] = rand() % 10;
+        }
+    }
+    printf("Matrix 1:\n");
+    display_matrix(matrix1);
+    printf("Matrix 2:\n");
+    display_matrix(matrix2);
+}
+
+void display_matrix(int matrix[SIZE][SIZE]) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            printf("%d ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void *add_matrices(void *arg) {
+    printf("Thread for Addition started.\n");
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = matrix1[i][j] + matrix2[i][j];
+        }
+    }
+    printf("Result of Addition:\n");
+    display_matrix(result);
+    printf("Thread for Addition ended.\n");
+    
+    int *exit_status = malloc(sizeof(int));  
+    *exit_status = 0;
+    pthread_exit(exit_status); 
+}
+
+void *subtract_matrices(void *arg) {
+    printf("Thread for Subtraction started.\n");
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = matrix1[i][j] - matrix2[i][j];
+        }
+    }
+    printf("Result of Subtraction:\n");
+    display_matrix(result);
+    printf("Thread for Subtraction ended.\n");
+    
+    int *exit_status = malloc(sizeof(int)); 
+    *exit_status = 1;  
+    pthread_exit(exit_status);  
+}
+
+void *multiply_matrices(void *arg) {
+    printf("Thread for Multiplication started.\n");
+    int *k = (int *)malloc(sizeof(int));  // Allocate memory for the pointer
+    *k = 1;  // Assign a value to *k
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = 0;
+            for (*k = 0; *k < SIZE; (*k)++) {  // Use *k as the loop variable
+                result[i][j] += matrix1[i][*k] * matrix2[*k][j];
+            }
+        }
+    }
+    printf("Result of Multiplication:\n");
+    display_matrix(result);
+    printf("Thread for Multiplication ended.\n");
+    
+    free(k); 
+    
+    int *exit_status = malloc(sizeof(int)); 
+    *exit_status = 2;
+    pthread_exit(exit_status); 
+}
+
+int main() {
+    pthread_t tid1, tid2, tid3;
+    void *status;
+
+    initialize_matrices();
+
+    if (pthread_create(&tid1, NULL, add_matrices, NULL) != 0) {
+        perror("Failed to create thread for addition");
+        return 1;
+    }
+    if (pthread_create(&tid2, NULL, subtract_matrices, NULL) != 0) {
+        perror("Failed to create thread for subtraction");
+        return 1;
+    }
+    if (pthread_create(&tid3, NULL, multiply_matrices, NULL) != 0) {
+        perror("Failed to create thread for multiplication");
+        return 1;
+    }
+
+    if (pthread_join(tid1, &status) != 0) {
+        perror("Failed to join thread for addition");
+        return 1;
+    }
+    printf("Thread for Addition exited with status: %d\n", *((int *)status));
+    free(status);  
+
+    if (pthread_join(tid2, &status) != 0) {
+        perror("Failed to join thread for subtraction");
+        return 1;
+    }
+    printf("Thread for Subtraction exited with status: %d\n", *((int *)status));
+    free(status);  
+
+    if (pthread_join(tid3, &status) != 0) {
+        perror("Failed to join thread for multiplication");
+        return 1;
+    }
+    printf("Thread for Multiplication exited with status: %d\n", *((int *)status));
+    free(status);  
+
+    return 0;
+}
