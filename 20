@@ -1,0 +1,80 @@
+//20.scan
+//scan
+ #include <stdio.h>
+ #include <stdlib.h>
+
+void scan(int requests[], int n, int head, int direction, int max_track)
+{
+    int seek_time = 0;
+    printf("SCAN Disk Scheduling:\n");
+    printf("Request Order | Head Position | Seek Distance\n");
+
+    // Sort requests
+    int left[n], right[n], l_count = 0, r_count = 0;
+    for (int i = 0; i < n; i++)
+    {
+        if (requests[i] < head)
+            left[l_count++] = requests[i];
+        else
+            right[r_count++] = requests[i];
+    }
+
+    qsort(left, l_count, sizeof(int), cmp);
+    qsort(right, r_count, sizeof(int), cmp);
+
+    if (direction == 1)
+    { // Move towards the end
+        for (int i = 0; i < r_count; i++)
+        {
+            seek_time += abs(head - right[i]);
+            printf("%12d | %13d | %13d\n", right[i], head, abs(head - right[i]));
+            head = right[i];
+        }
+        seek_time += abs(head - max_track); // Move to end of the disk
+        head = max_track;
+
+        for (int i = l_count - 1; i >= 0; i--)
+        {
+            seek_time += abs(head - left[i]);
+            printf("%12d | %13d | %13d\n", left[i], head, abs(head - left[i]));
+            head = left[i];
+        }
+    }
+    else
+    {
+        for (int i = l_count - 1; i >= 0; i--)
+        {
+            seek_time += abs(head - left[i]);
+            printf("%12d | %13d | %13d\n", left[i], head, abs(head - left[i]));
+            head = left[i];
+        }
+        seek_time += head; // Move to the start of the disk
+        head = 0;
+
+        for (int i = 0; i < r_count; i++)
+        {
+            seek_time += abs(head - right[i]);
+            printf("%12d | %13d | %13d\n", right[i], head, abs(head - right[i]));
+            head = right[i];
+        }
+    }
+
+    printf("\nTotal Seek Time: %d cylinders\n", seek_time);
+    printf("Average Seek Time: %.2f cylinders\n\n", (float)seek_time / n);
+}
+
+int cmp(const void *a, const void *b)
+{
+    return (*(int *)a - *(int *)b);
+}
+
+int main()
+{
+    int requests[] = {82, 170, 43, 140, 24, 16, 190};
+    int head = 50;
+    int direction = 1; // 1 for end, -1 for start
+    int max_track = 199;
+    int n = sizeof(requests) / sizeof(requests[0]);
+    scan(requests, n, head, direction, max_track);
+    return 0;
+}
